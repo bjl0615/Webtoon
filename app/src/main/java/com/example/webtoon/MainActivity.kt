@@ -1,46 +1,58 @@
 package com.example.webtoon
 
+import android.app.Activity
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Gravity
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.TextView
 import com.example.webtoon.databinding.ActivityMainBinding
+import com.google.android.material.tabs.TabLayoutMediator
+class MainActivity : AppCompatActivity(), OnTabLayoutNameChanged {
 
-class MainActivity : AppCompatActivity() {
-    private lateinit var binding : ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val container = binding.fragmentContainer
+        val sharedPreference = getSharedPreferences(WebViewFragment.Companion.SHARED_PREFERENCE, Context.MODE_PRIVATE)
+        val tab0 = sharedPreference?.getString("tab0_name", "월요웹툰")
+        val tab1 = sharedPreference?.getString("tab1_name", "화요웹툰")
+        val tab2 = sharedPreference?.getString("tab2_name", "수요웹툰")
 
-        binding.button1.setOnClickListener {
-            val transaction = supportFragmentManager.beginTransaction().apply {
-                replace(R.id.fragmentContainer, WebViewFragment())
-                commit()
-            }
-        }
+        binding.viewPager.adapter = ViewPagerAdapter(this)
 
-        binding.button2.setOnClickListener {
-            val transaction = supportFragmentManager.beginTransaction().apply {
-                replace(R.id.fragmentContainer, BFragment())
-                commit()
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            run {
+                tab.text = when(position) {
+                    0 -> tab0
+                    1 -> tab1
+                    else -> tab2
+                }
             }
-        }
+        }.attach()
     }
 
     override fun onBackPressed() {
-       val currentFragment = supportFragmentManager.fragments[0]
+        val currentFragment = supportFragmentManager.fragments[binding.viewPager.currentItem]
         if(currentFragment is WebViewFragment) {
-            if(currentFragment.canGoBack()){
+            if(currentFragment.canGoBack()) {
                 currentFragment.goBack()
-            }else {
+            } else {
                 super.onBackPressed()
             }
-        }else {
+        } else {
             super.onBackPressed()
         }
-//        super.onBackPressed()
     }
+
+    override fun nameChanged(position: Int, name: String) {
+        val tab = binding.tabLayout.getTabAt(position)
+        tab?.text = name
+    }
+
 }
